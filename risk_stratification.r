@@ -54,7 +54,7 @@ status
 
 #load all the data required
 
-diabetic_data <- read.csv("diabetic_data.csv" )
+diabetic_data <- read.csv("diabetic_data.csv" , stringsAsFactors = F)
 str(diabetic_data)
 
 
@@ -153,37 +153,35 @@ glimpse(diabetic_data)
 #All the columns of drugs can be removed and we can consider the column change and diabetesMed
 
 #Removing redundatn rows from Data which are not useful in model building 
-col_indices <- c( 6 ,11,12,23,25:41 , 43:47)
+col_indices <- c( 1,2,6 ,11,12,23,25:41 , 43:47)
 diabetic_data <- diabetic_data[ , - col_indices]
 
 #Replacing the '?' values in race and Diag 1 column 
 #Replacing '?' values in race column 
-#diabetic_data$race <- as.character(diabetic_data$race)
+diabetic_data$race[diabetic_data$race == '?' ] <- 'Other'
 
 str(diabetic_data)
 
 
 #Replaicng '?' values in diag_1 , diag_2 , diag_3 with 0 , Assuming patients dosent undergone secondary and tertiary diagnosis 
-diabetic_data$diag_1 <- as.numeric(levels(diabetic_data$diag_1))[diabetic_data$diag_1]
-diabetic_data$diag_2 <- as.numeric(levels(diabetic_data$diag_2))[diabetic_data$diag_2]
-diabetic_data$diag_3 <- as.numeric(levels(diabetic_data$diag_3))[diabetic_data$diag_3]
-diabetic_data$diag_1[is.na(diabetic_data$diag_1) ]<- 0
-diabetic_data$diag_2[is.na(diabetic_data$diag_2)] <- 0
-diabetic_data$diag_3[is.na(diabetic_data$diag_3)] <- 0
+
+
+diabetic_data$diag_1[which(diabetic_data$diag_1 == '?') ]<- 0
+diabetic_data$diag_2[which(diabetic_data$diag_2 == '?')] <- 0
+diabetic_data$diag_3[which(diabetic_data$diag_3 == '?')] <- 0
+
 
 
 #Changing the values ">8" and ">7" of variable "readmitted" to "High" and "Medium"
-diabetic_data$A1Cresult <- as.character(diabetic_data$A1Cresult)
 diabetic_data$A1Cresult[diabetic_data$A1Cresult == '>8'] <- "High"
 diabetic_data$A1Cresult[diabetic_data$A1Cresult == '>7'] <- "Medium"
-diabetic_data$A1Cresult <- as.factor(diabetic_data$A1Cresult)
+
 
 
 #Changing the values ">30" and "<30" of variable "readmitted" to "YES" 
-diabetic_data$readmitted <- as.character(diabetic_data$readmitted)
+
 diabetic_data$readmitted[diabetic_data$readmitted == '>30' ] <- 'Yes'
 diabetic_data$readmitted[diabetic_data$readmitted == '<30' ] <- 'Yes'
-diabetic_data$readmitted <- as.factor(diabetic_data$readmitted)
 
 
 
@@ -217,8 +215,10 @@ diabetic_temp <- mutate(diabetic_temp , comorbidity=case_when
                              diabetic_temp$diabetic == 0 & diabetic_temp$Ciculatory == 1 ~2,    
                              diabetic_temp$diabetic == 1 & diabetic_temp$Ciculatory == 1 ~3 ))
 
-diabetic_data$comorbidity <- cbind( diabetic_temp$comorbidity)
-diabetic_data$comorbidity <- as.factor(diabetic_data$comorbidity)
+
+diabetic_data <- cbind(diabetic_data , diabetic_temp$comorbidity)
+colnames(diabetic_data)[23] <- "comorbidity"
+
 
 
 #======================== DATA VISUALIZATION ANALYSIS ========================
@@ -254,7 +254,7 @@ ggplot(diabetic_data , aes(x=factor(comorbidity) , fill = factor(readmitted))) +
 
 
 #===== CATEGORICAL AND NUMERIC TREATMENT FOR LOGISTIC REGRESSION PURPOSE =====
-str(diabetic_data)
+
 # Categorical variable treatment
 
 # 2 level dummy variable treatment
@@ -267,19 +267,49 @@ diabetic_data <- mutate(diabetic_data , diabetesMed = ifelse(diabetic_data$diabe
 
 #Dummy variable creation for race 
 dummy_race <- data.frame(data.frame(model.matrix(~race , data = diabetic_data))[ ,-1])
-diabetic_data<- cbind(diabetic_data[ , -3] , dummy_race)
+diabetic_data<- cbind(diabetic_data[ , -1] , dummy_race)
 
 #Dummy variable creation for gender 
 dummy_gender <- data.frame(data.frame(model.matrix(~gender , data = diabetic_data))[ ,-1])
-diabetic_data<- cbind(diabetic_data[ , -3] , dummy_gender)
+diabetic_data<- cbind(diabetic_data[ , -1] , dummy_gender)
 
 #Dummy variable creation for A1Cresult 
 dummy_A1cresult <- data.frame(data.frame(model.matrix(~A1Cresult , data = diabetic_data))[ ,-1])
-diabetic_data<- cbind(diabetic_data[ , -18] , dummy_A1cresult)
+diabetic_data<- cbind(diabetic_data[ , -16] , dummy_A1cresult)
 
 #Dummy variable creation for insulin 
 dummy_insulin <- data.frame(data.frame(model.matrix(~insulin , data = diabetic_data))[ ,-1])
-diabetic_data<- cbind(diabetic_data[ , -18] , dummy_insulin)
+diabetic_data<- cbind(diabetic_data[ , -16] , dummy_insulin)
+
+#Dummy variable creation for age
+dummy_age <- data.frame(data.frame(model.matrix(~age , data = diabetic_data))[ ,-1])
+diabetic_data<- cbind(diabetic_data[ , -1] , dummy_age)
+
+str(diabetic_temp)
+
+diabetic_data$diag_1 <- as.factor(diabetic_data$diag_1)
+diabetic_data$diag_1 <- levels(diabetic_data$diag_1)[diabetic_data$diag_1]
+diabetic_data$diag_1 <- as.numeric(diabetic_data$diag_1)
+diabetic_data$diag_1[is.na(diabetic_data$diag_1)] <- 0
+
+diabetic_data$diag_2 <- as.factor(diabetic_data$diag_2)
+diabetic_data$diag_2 <- levels(diabetic_data$diag_2)[diabetic_data$diag_2]
+diabetic_data$diag_2 <- as.numeric(diabetic_data$diag_2)
+diabetic_data$diag_2[is.na(diabetic_data$diag_2)] <- 0
+
+
+diabetic_data$diag_3 <- as.factor(diabetic_data$diag_3)
+diabetic_data$diag_3 <- levels(diabetic_data$diag_3)[diabetic_data$diag_3]
+diabetic_data$diag_3 <- as.numeric(diabetic_data$diag_3)
+diabetic_data$diag_3[is.na(diabetic_data$diag_3)] <- 0
+
+
+check_for_Nas(diabetic_data)
+check_for_missed(diabetic_data)
+str(diabetic_data)
+
+
+
 
 # Scale Numeric variable having high variability in numeric range
 
@@ -287,12 +317,9 @@ scale_cols <- c('num_medications','num_lab_procedures', 'diag_1' , 'diag_2' , 'd
 
 diabetic_data[ , scale_cols] <- lapply(diabetic_data[ ,scale_cols], scale)
 
-diabetic_data$num_lab_procedures<- as.numeric(diabetic_data$num_lab_procedures)
-diabetic_data$num_medications <- as.numeric(diabetic_data$num_medications)
-diabetic_data$diag_1 <- as.factor(diabetic_data$diag_1)
-diabetic_data$diag_2 <- as.factor(diabetic_data$diag_2)
-diabetic_data$diag_3 <- as.factor(diabetic_data$diag_3)
+diabetic_data$readmitted <- as.factor(diabetic_data$readmitted)
 
+str(diabetic_data)
 
 #========================= CREATIING TRAINING AND TEST DATA ==================
 
@@ -312,9 +339,10 @@ test = final_data[-trainindices,]
 #Lets create model with all variable
 model_1 <- glm(readmitted ~ ., data = train,family = 'binomial')
 
-#Null deviance: 98321  on 71235  degrees of freedom
-#Residual deviance: 91869  on 71198  degrees of freedom
-#AIC: 91945
+#Null deviance: 90110  on 65285  degrees of freedom
+#Residual deviance: 84815  on 65247  degrees of freedom
+#(5950 observations deleted due to missingness)
+#AIC: 84893
 summary(model_1)
 
 # Though AIC is not provide a test of model in the sense of testing null hypothesis
@@ -331,28 +359,33 @@ step <- stepAIC(model_1 , direction = "both")
 summary(step)
 
 
-model_3 <- glm(formula = readmitted ~ encounter_id + patient_nbr + gender + 
-                 age + admission_type_id + discharge_disposition_id + admission_source_id + 
+model_3 <- glm(formula = readmitted ~ admission_type_id + discharge_disposition_id + admission_source_id + 
                  time_in_hospital + num_lab_procedures + num_procedures + 
-                 num_medications + number_outpatient + number_emergency + 
-                 number_inpatient + diag_2 + diag_3 + insulin + change + diabetesMed + 
-                 comorbidity + A1CresultNone + A1CresultNorm, family = "binomial", 
-               data = train)
+                 number_outpatient + number_emergency + number_inpatient + 
+                 diag_3 + number_diagnoses + change + diabetesMed + comorbidity + 
+                 raceAsian + raceCaucasian + raceHispanic + raceOther + genderMale + 
+                 A1CresultNorm + insulinNo + insulinSteady + insulinUp + age.10.20. + 
+                 age.20.30. + age.30.40. + age.40.50. + age.50.60. + age.60.70. + 
+                 age.70.80. + age.80.90. + age.90.100. , family = "binomial" , data = train)
 #Null deviance: 98321  on 71235  degrees of freedom
-#Residual deviance: 91870  on 71200  degrees of freedom
-#AIC: 91942
+#Residual deviance: 92606  on 71203  degrees of freedom
+#AIC: 92672
 summary(model_3)
-sort(vif(model_3),decreasing = T)
+sort(vif(model_3) , decreasing = T)
+#All the Vif values are very low ,We can check for statistically insignificant variables and remove them one by one 
 
 
 #Select the variables which are required for model building 
 
-train <- dplyr::select(train , encounter_id ,patient_nbr,gender,
-                         age , admission_type_id , discharge_disposition_id,admission_source_id, 
-                         time_in_hospital, num_lab_procedures,num_procedures , 
-                         num_medications , number_outpatient , number_emergency , 
-                         number_inpatient, diag_2,diag_3, insulin, change ,diabetesMed, 
-                         comorbidity,A1CresultNone,A1CresultNorm,readmitted)
+train <- dplyr::select(train ,admission_type_id , discharge_disposition_id,
+                              admission_source_id,time_in_hospital, num_lab_procedures,
+                              num_procedures, number_outpatient, number_emergency,number_inpatient,
+                              diag_3 ,number_diagnoses,change, diabetesMed,comorbidity,
+                              raceAsian,raceCaucasian,raceHispanic,raceOther,genderMale,
+                              A1CresultNorm,insulinNo , insulinSteady , insulinUp , age.10.20. ,
+                              age.20.30. , age.30.40. , age.40.50.,age.50.60. , age.60.70. ,
+                              age.70.80. ,age.80.90. ,age.90.100.,readmitted)
+
 # MODEL 4
 # Here onwards we will keep removing one variable which is insignificant at a time
 # To check which variable is insignificant we check its pvalue and vif value.
@@ -364,5 +397,68 @@ train <- dplyr::select(train , encounter_id ,patient_nbr,gender,
 #    for other insignificant variables before removing the variable with a higher vif and lower p values.
 
 
+train <- dplyr::select(train , -age.90.100.)
+model_4 <- glm(readmitted~. , data= train , family = "binomial")
+#Null deviance: 98321  on 71235  degrees of freedom
+#Residual deviance: 92608  on 71204  degrees of freedom
+#AIC: 92672
+summary(model_4)
+sort(vif(model_4) , decreasing = T)
+
+#Model5
+# raceCaucasian can be removed after analysing previosu result 
+
+train<- dplyr::select(train , -raceCaucasian)
+model_5 <- glm(readmitted~. , data= train , family = "binomial")
+#Null deviance: 98321  on 71235  degrees of freedom
+#Residual deviance: 92611  on 71205  degrees of freedom
+#AIC: 92673
+summary(model_5)
+sort(vif(model_5) , decreasing = T)
+
+#Model6
+# change can be removed after analysing previosu result
+train<- dplyr::select(train , -change)
+model_6 <- glm(readmitted~. , data= train , family = "binomial")
+#Null deviance: 98321  on 71235  degrees of freedom
+#Residual deviance: 92613  on 71206  degrees of freedom
+#AIC: 92673
+summary(model_6)
+sort(vif(model_6) , decreasing = T)
+
+#Model7
+# insulinup can be removed after analysing previosu result
+train<- dplyr::select(train , -insulinUp)
+model_7 <- glm(readmitted~. , data= train , family = "binomial")
+#Null deviance: 98321  on 71235  degrees of freedom
+#Residual deviance: 92616  on 71207  degrees of freedom
+#AIC: 92674
+#AIC: 92673
+summary(model_7)
+sort(vif(model_7) , decreasing = T)
+
+
+
+
+#========================= MODEL BUILDING using Random Forest ====================================
+
+train_forest <- diabetic_data 
+
+#========================= CREATIING TRAINING AND TEST DATA ==================
+
+set.seed(100)
+
+trainindices1 <-sample(1:nrow(train_forest), 0.7 * nrow(train_forest)) 
+train1 <- train_forest[trainindices1, ]
+test1 <- train_forest[-trainindices1 , ]
+
+data.rf <- randomForest(readmitted~., data = train1 , proximity = F ,do.trace = T , mtry=5 ,na.action = na.omit )
+data.rf
+testpred <- predict(data.rf , newdata = test1 [ ,-24])
+test1$pred <- testpred
+caret::confusionMatrix(test1$readmitted , test1$pred , positive = "NO") 
+
+
+summary(testpred)
 
 
