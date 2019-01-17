@@ -1,0 +1,87 @@
+#Model9
+# age.10.20. can be removed after analysing previosu result
+train<- dplyr::select(train , -age.10.20.)
+model_9 <- glm(readmitted~. , data= train , family = "binomial")
+#Null deviance: 98321  on 71235  degrees of freedom
+#Residual deviance: 92628  on 71209  degrees of freedom
+#AIC: 92682
+summary(model_9)
+sort(vif(model_9) , decreasing = T)
+
+#Model10
+# age.20.30. can be removed after analysing previosu result
+train<- dplyr::select(train , -age.20.30.)
+model_10 <- glm(readmitted~. , data= train , family = "binomial")
+#Null deviance: 98321  on 71235  degrees of freedom
+#Residual deviance: 92633  on 71210  degrees of freedom
+#AIC: 92685
+summary(model_10)
+sort(vif(model_10) , decreasing = T)
+
+#Model11
+# age.30.40 can be removed after analysing previosu result
+train<- dplyr::select(train , -age.30.40.)
+model_11 <- glm(readmitted~. , data= train , family = "binomial")
+#Null deviance: 98321  on 71235  degrees of freedom
+#Residual deviance: 92636  on 71211  degrees of freedom
+#AIC: 92686
+summary(model_11)
+sort(vif(model_11) , decreasing = T)
+
+#Model12
+# age.40.50. can be removed after analysing previosu result
+train<- dplyr::select(train , -age.40.50.)
+model_12 <- glm(readmitted~. , data= train , family = "binomial")
+#Null deviance: 98321  on 71235  degrees of freedom
+#Residual deviance: 92636  on 71211  degrees of freedom
+#AIC: 92686
+summary(model_12)
+sort(vif(model_12) , decreasing = T)
+
+
+#Model13
+# raceHispanic can be removed after analysing previosu result
+train<- dplyr::select(train , -raceHispanic)
+model_13 <- glm(readmitted~. , data= train , family = "binomial")
+#Null deviance: 98321  on 71235  degrees of freedom
+#Residual deviance: 92647  on 71211  degrees of freedom
+#AIC: 92693
+summary(model_13)
+sort(vif(model_13) , decreasing = T)
+
+
+#Model14
+# age.50.60. can be removed after analysing previosu result
+train<- dplyr::select(train , -age.50.60.)
+model_14 <- glm(readmitted~. , data= train , family = "binomial")
+#Null deviance: 98321  on 71235  degrees of freedom
+#Residual deviance: 92654  on 71211  degrees of freedom
+#AIC: 92698
+summary(model_14)
+sort(vif(model_14) , decreasing = T)
+
+#Model15 
+# insulinNo can be removed after analysing previosu result
+train<- dplyr::select(train , -insulinNo)
+model_15 <- glm(readmitted~. , data= train , family = "binomial")
+#Null deviance: 98321  on 71235  degrees of freedom
+#Residual deviance: 92654  on 71211  degrees of freedom
+#AIC: 92702
+summary(model_15)
+sort(vif(model_15) , decreasing = T)
+
+
+
+#========================= MODEL Evaluation ====================================
+
+
+test_pred <- predict(model_15 , type = "response" , newdata = test[,-17])
+
+summary(test_pred)
+
+test$prob <- round(test_pred ,2)
+
+pred_readmitted <- factor(ifelse(test_pred <=0.50 , 'NO' , 'Yes'))
+actual_readmitted <- as.factor(test$readmitted)
+table(actual_readmitted,pred_readmitted)
+
